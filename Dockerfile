@@ -1,4 +1,20 @@
+# ------------------------------------------------------------------------------
+# Docker development image for the Laravel Framework
+#
+#   e.g. docker build -t andreicon/laravel .
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Start with alpine linux base image
+# ------------------------------------------------------------------------------
+
 FROM alpine:3.5
+
+MAINTAINER Andrei Costea <andrei.costea47@gmail.com>
+
+# ------------------------------------------------------------------------------
+# Install dependencies
+# ------------------------------------------------------------------------------
 
 RUN apk --update --no-cache add \
 	curl \
@@ -35,6 +51,10 @@ RUN apk --update --no-cache add \
     php7-xml \
     php7-zip
 
+# ------------------------------------------------------------------------------
+# Some PHP tweaks
+# ------------------------------------------------------------------------------
+
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN mkdir -p $PHP_INI_DIR/conf.d
 
@@ -42,6 +62,10 @@ RUN ln -s /usr/bin/php7 /usr/bin/php
 
 RUN echo "memory_limit=-1" > "$PHP_INI_DIR/conf.d/memory-limit.ini" \
  && echo "date.timezone=${PHP_TIMEZONE:-UTC}" > "$PHP_INI_DIR/conf.d/date_timezone.ini"
+
+# ------------------------------------------------------------------------------
+# Get Composer
+# ------------------------------------------------------------------------------
 
 ENV PATH "/composer/vendor/bin:$PATH"
 ENV COMPOSER_ALLOW_SUPERUSER 1
@@ -61,8 +85,26 @@ RUN curl -s -f -L -o /tmp/installer.php https://raw.githubusercontent.com/compos
  && rm /tmp/installer.php \
  && composer --ansi --version --no-interaction
 
-RUN composer create-project --prefer-dist laravel/laravel app
+# ------------------------------------------------------------------------------
+# Create laravel project in /laravel, switch dir and run the development server
+# on port 8000 (remember to expose this port with -p 8000:8000 or -P)
+# ------------------------------------------------------------------------------
 
-WORKDIR /app
+RUN composer create-project --prefer-dist laravel/laravel laravel
+
+WORKDIR /laravel
+
+EXPOSE 8000
 
 CMD ["php", "artisan", "serve", "--host", "0.0.0.0", "--port", "8000"]
+
+# ------------------------------------------------------------------------------
+# Run using
+# 
+# $ docker run -d -p 8000:8000 --name laravel andreicon/laravel
+#
+# To send commands
+#
+# $ docker exec laravel php artisan migrate
+#
+# ------------------------------------------------------------------------------

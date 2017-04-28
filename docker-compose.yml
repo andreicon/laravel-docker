@@ -1,13 +1,15 @@
 version: "2"
 services:
   laravel:
-    image: andreicon/laravel
+    image: andreicon/laravel-docker
     environment:
       - DB_HOST=mysql
     ports:
-      - 8000:8000
+      - 8086:8000
     depends_on:
       - mysql
+    volumes:
+      - ./laravel:/laravel
   mysql:
     image: mysql
     environment:

@@ -50,7 +50,8 @@ RUN apk --update --no-cache add \
     php7-session \
     php7-soap \
     php7-xml \
-    php7-zip
+    php7-zip \
+    nodejs
 
 # ------------------------------------------------------------------------------
 # Some PHP tweaks
@@ -94,6 +95,10 @@ RUN curl -s -f -L -o /tmp/installer.php https://raw.githubusercontent.com/compos
 RUN composer create-project --prefer-dist laravel/laravel laravel
 
 WORKDIR /laravel
+
+RUN php artisan make:auth
+
+RUN npm install
 
 EXPOSE 8000
 

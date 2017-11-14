@@ -8,7 +8,7 @@
 # Start with alpine linux base image
 # ------------------------------------------------------------------------------
 
-FROM alpine:3.5
+FROM alpine:3.6
 
 MAINTAINER Andrei Costea <andrei.costea47@gmail.com>
 

@@ -1,15 +1,19 @@
 version: "2"
 services:
   laravel:
-    image: andreicon/laravel-docker
+    image: andreicon/laravel
     environment:
       - DB_HOST=mysql
+      - DB_USERNAME=homestead
+      - DB_PASSWORD=secret
+      - DB_DATABASE=homestead
+      - APP_KEY=base64:fWgoOBWO8Tcg4I2KtIugxaQ6mLtOYgTf/N0M4l2pCgc=
     ports:
       - 8086:8000
     depends_on:
       - mysql
     volumes:
-      - ./laravel:/laravel
+      - ./laravel:/home/andrei/laravel
   mysql:
     image: mysql
     environment:

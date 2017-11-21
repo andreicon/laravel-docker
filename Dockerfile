@@ -52,7 +52,9 @@ RUN apk --update --no-cache add \
 	php7-tokenizer \
 	php7-xml \
 	php7-zip \
-	nodejs
+	php7-zlib \
+	nodejs \
+	nodejs-npm
 
 # ------------------------------------------------------------------------------
 # Some PHP tweaks

@@ -1,80 +1,49 @@
 # ------------------------------------------------------------------------------
 # Docker development image for the Laravel Framework
 #
-#   e.g. docker build -t andreicon/laravel .
+#   e.g. docker build -t appticles/laravel .
 # ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
-# Start with alpine linux base image
-# ------------------------------------------------------------------------------
-
-FROM alpine:3.6
-
-MAINTAINER Andrei Costea <andrei.costea47@gmail.com>
+FROM php:7.2-fpm
 
 # ------------------------------------------------------------------------------
 # Install dependencies
 # ------------------------------------------------------------------------------
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    curl \
+		git \
+    libmemcached-dev \
+    libz-dev \
+    libpq-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libssl-dev \
+    libmcrypt-dev \
+    libxml2-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-RUN apk --update --no-cache add \
-	curl \
-	git \
-	subversion \
-	openssh \
-	openssl \
-	mercurial \
-	tini \
-	bash \
-	php7 \
-	php7-bcmath \
-    	php7-dom \
-	php7-ctype \
-	php7-curl \
-	php7-fpm \
-	php7-gd \
-	php7-gmp \
-	php7-iconv \
-	php7-intl \
-	php7-json \
-	php7-mbstring \
-	php7-mcrypt \
-	php7-mysqlnd \
-	php7-opcache \
-	php7-openssl \
-	php7-pdo \
-	php7-pdo_mysql \
-	php7-pdo_pgsql \
-	php7-pdo_sqlite \
-	php7-phar \
-	php7-posix \
-	php7-session \
-	php7-soap \
-	php7-tokenizer \
-	php7-xml \
-	php7-zip \
-	php7-zlib \
-	nodejs \
-	nodejs-npm
+RUN docker-php-ext-install mysqli mbstring pdo pdo_mysql tokenizer xml
+RUN pecl channel-update pecl.php.net && pecl install memcached mcrypt-1.0.1 && docker-php-ext-enable memcached
+RUN docker-php-ext-configure gd \
+    --enable-gd-native-ttf \
+    --with-jpeg-dir=/usr/lib \
+    --with-freetype-dir=/usr/include/freetype2 && \
+    docker-php-ext-install gd
 
-# ------------------------------------------------------------------------------
-# Some PHP tweaks
-# ------------------------------------------------------------------------------
-
-ENV PHP_INI_DIR /usr/local/etc/php
-RUN mkdir -p $PHP_INI_DIR/conf.d
-
-RUN echo "memory_limit=-1" > "$PHP_INI_DIR/conf.d/memory-limit.ini" \
- && echo "date.timezone=${PHP_TIMEZONE:-UTC}" > "$PHP_INI_DIR/conf.d/date_timezone.ini"
+RUN pecl install mongodb-1.4.2 && \
+    docker-php-ext-enable mongodb
 
 # ------------------------------------------------------------------------------
 # Add a less privileged user
 # You may want to change the UID and GID to match the ones on your host
 # ------------------------------------------------------------------------------
 
-ARG USER=andrei
-ARG USERID=1001
+ARG USER=andreicon
+ARG USERID=1000
 
-RUN addgroup -g ${USERID} ${USER} && adduser -u ${USERID} -D -S -g ${USER} ${USER} 
+RUN useradd -d /home/${USER} -s /bin/bash -m ${USER}
 
 USER ${USERID}:${USERID}
 
@@ -93,18 +62,13 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     mkdir -p /home/${USER}/composer/vendor/bin/ && \
     mv /home/${USER}/composer.phar /home/${USER}/composer/vendor/bin/composer
 
+RUN composer global require phpunit/phpunit
 # ------------------------------------------------------------------------------
 # Create laravel project in /laravel, switch dir and run the development server
 # on port 8000 (remember to expose this port with -p 8000:8000 or -P)
 # ------------------------------------------------------------------------------
 
-RUN composer create-project --prefer-dist laravel/laravel laravel
-
 WORKDIR /home/${USER}/laravel
-
-RUN php artisan make:auth
-
-RUN npm install
 
 EXPOSE 8000
 
@@ -113,10 +77,10 @@ CMD ["php", "artisan", "serve", "--host", "0.0.0.0", "--port", "8000"]
 # ------------------------------------------------------------------------------
 # Run using
 # 
-# $ docker run -d -p 8000:8000 --name laravel andreicon/laravel
+# $ docker-compose up -d --build
 #
 # To send commands (eg. migrate tables for the auth we made during build)
 #
-# $ docker exec laravel php artisan migrate
-#
+# $ docker-compose exec laravel php artisan migrate
+#			^ replace with directoryname_laravel
 # ------------------------------------------------------------------------------
